@@ -2,7 +2,6 @@ package com.niumTask.nium.dto;
 
 import jakarta.validation.constraints.DecimalMin;
 import jakarta.validation.constraints.NotNull;
-import jakarta.validation.constraints.Positive;
 import lombok.AllArgsConstructor;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
@@ -14,9 +13,10 @@ import java.math.BigDecimal;
 @Setter
 @NoArgsConstructor
 @AllArgsConstructor
-public class CardSpendRequestDTO {
+public class CardTopupRequestDTO {
 
     @NotNull(message = "Amount is required")
     @DecimalMin(value = "0.0", message = "Amount must be positive (equal or greater than 0)")
     private BigDecimal amount;
+
 }

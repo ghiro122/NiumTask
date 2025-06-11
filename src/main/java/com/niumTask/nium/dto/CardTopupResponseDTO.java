@@ -11,7 +11,7 @@ import java.math.BigDecimal;
 @Setter
 @AllArgsConstructor
 @NoArgsConstructor
-public class CardSpendResponseDTO {
+public class CardTopupResponseDTO {
     private Long id;
-    private BigDecimal remainingBalance;
+    private BigDecimal newBalance;
 }

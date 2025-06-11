@@ -2,20 +2,31 @@ package com.niumTask.nium.service.Impl;
 
 import com.niumTask.nium.dto.*;
 import com.niumTask.nium.entity.Card;
+import com.niumTask.nium.entity.Transaction;
+import com.niumTask.nium.enums.TransactionType;
 import com.niumTask.nium.repository.CardRepo;
+import com.niumTask.nium.repository.TransactionRepo;
 import com.niumTask.nium.service.CardService;
-import org.springframework.beans.factory.annotation.Autowired;
+import jakarta.persistence.OptimisticLockException;
+import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 
 import java.sql.Timestamp;
 import java.time.Instant;
+import java.util.List;
 import java.util.Optional;
+import java.util.stream.Collectors;
 
 @Service
+@RequiredArgsConstructor
 public class CardServiceImpl implements CardService {
 
-    @Autowired
-    private CardRepo cardRepo;
+
+    private final CardRepo cardRepo;
+
+    private final TransactionRepo transactionRepo;
+
 
     @Override
     public CardCreateResponseDTO createCard(CardCreateRequestDTO cardDTO) {
@@ -36,6 +47,7 @@ public class CardServiceImpl implements CardService {
     }
 
     @Override
+    @Transactional
     public CardSpendResponseDTO deductFromCard(Long cardId, CardSpendRequestDTO reqDTO) {
 
         Optional<Card> cardOptional = cardRepo.findById(cardId);
@@ -46,8 +58,24 @@ public class CardServiceImpl implements CardService {
             }
 
             card.setBalance(card.getBalance().subtract(reqDTO.getAmount()));
-            cardRepo.save(card);
-            return new CardSpendResponseDTO(card.getId(), card.getBalance());
+            try {
+                cardRepo.save(card);
+            } catch (OptimisticLockException e) {
+                throw new IllegalStateException("Concurrency conflict");
+            }
+
+            Transaction trans = new Transaction();
+            trans.setCard(card);
+            trans.setAmount(trans.getAmount());
+            trans.setTimestamp(Timestamp.from(Instant.now()));
+            trans.setTransType(TransactionType.DEDUCT);
+            transactionRepo.save(trans);
+
+            CardSpendResponseDTO responseDTO = new CardSpendResponseDTO();
+            responseDTO.setId(card.getId());
+            responseDTO.setRemainingBalance(card.getBalance());
+            return responseDTO;
+
         } else throw new IllegalArgumentException("Card not found");
     }
 
@@ -64,5 +92,40 @@ public class CardServiceImpl implements CardService {
             responseDTO.setCreatedAt(card.getCreatedAt());
             return responseDTO;
         } else throw new IllegalArgumentException("Card not found");
+    }
+
+    @Override
+    @Transactional
+    public CardTopupResponseDTO topupCard(Long cardId, CardTopupRequestDTO reqDTO) {
+        Optional<Card> cardOptional = cardRepo.findById(cardId);
+        if (cardOptional.isPresent()) {
+            Card card = cardOptional.get();
+            card.setBalance(reqDTO.getAmount().add(card.getBalance()));
+            try {
+                cardRepo.save(card);
+            } catch (OptimisticLockException e) {
+                throw new IllegalStateException("Concurrency conflict");
+            }
+
+            Transaction trans = new Transaction();
+            trans.setCard(card);
+            trans.setTransType(TransactionType.TOPUP);
+            trans.setTimestamp(Timestamp.from(Instant.now()));
+            trans.setAmount(reqDTO.getAmount());
+            transactionRepo.save(trans);
+
+            return new CardTopupResponseDTO(card.getId(), card.getBalance());
+        } else throw new IllegalArgumentException("Card not found");
+
+
+    }
+
+    @Override
+    public List<TransactionDTO> getTransactionsByCardId(Long cardId) {
+        return transactionRepo.findByCardId(cardId).stream()
+                .map(trans -> new TransactionDTO(
+                        trans.getId(), trans.getAmount(), trans.getTransType(), trans.getTimestamp()
+                ))
+                .collect(Collectors.toList());
     }
 }
