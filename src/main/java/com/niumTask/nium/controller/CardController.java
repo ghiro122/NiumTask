@@ -22,9 +22,9 @@ public class CardController {
     }
 
     @PostMapping("/{id}/spend")
-    public ResponseEntity<?> deductFromCard(@PathVariable Long id, @RequestBody CardAmountRequestDTO cardAmountRequestDTO) {
+    public ResponseEntity<?> deductFromCard(@PathVariable Long id, @RequestBody CardSpendRequestDTO cardSpendRequestDTO) {
         try {
-            CardAmountResponseDTO responseDTO = cardService.deductFromCard(id, cardAmountRequestDTO);
+            CardSpendResponseDTO responseDTO = cardService.deductFromCard(id, cardSpendRequestDTO);
             return ResponseEntity.ok(responseDTO);
         } catch (IllegalArgumentException e) {
             return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(e.getMessage());

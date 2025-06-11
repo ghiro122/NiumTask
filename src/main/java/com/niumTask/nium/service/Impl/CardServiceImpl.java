@@ -36,7 +36,7 @@ public class CardServiceImpl implements CardService {
     }
 
     @Override
-    public CardAmountResponseDTO deductFromCard(Long cardId, CardAmountRequestDTO reqDTO) {
+    public CardSpendResponseDTO deductFromCard(Long cardId, CardSpendRequestDTO reqDTO) {
 
         Optional<Card> cardOptional = cardRepo.findById(cardId);
         if (cardOptional.isPresent()) {
@@ -47,7 +47,7 @@ public class CardServiceImpl implements CardService {
 
             card.setBalance(card.getBalance().subtract(reqDTO.getAmount()));
             cardRepo.save(card);
-            return new CardAmountResponseDTO(card.getId(), card.getBalance());
+            return new CardSpendResponseDTO(card.getId(), card.getBalance());
         } else throw new IllegalArgumentException("Card not found");
     }
 

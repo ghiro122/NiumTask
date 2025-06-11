@@ -7,6 +7,6 @@ import java.math.BigDecimal;
 
 @Getter
 @Setter
-public class CardAmountRequestDTO {
+public class CardSpendRequestDTO {
     private BigDecimal amount;
 }
