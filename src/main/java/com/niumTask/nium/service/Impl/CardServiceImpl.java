@@ -66,7 +66,7 @@ public class CardServiceImpl implements CardService {
 
             Transaction trans = new Transaction();
             trans.setCard(card);
-            trans.setAmount(trans.getAmount());
+            trans.setAmount(reqDTO.getAmount());
             trans.setTimestamp(Timestamp.from(Instant.now()));
             trans.setTransType(TransactionType.DEDUCT);
             transactionRepo.save(trans);
